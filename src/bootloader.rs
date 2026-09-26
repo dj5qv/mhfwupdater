@@ -1,3 +1,7 @@
+// mhfwupdater - firmware updater for microHAM USB devices
+// Copyright (C) 2026  Matthias Moeller, DJ5QV
+// SPDX-License-Identifier: GPL-2.0-only
+
 //! Bootloader protocol: entering the bootloader, reading its version and
 //! writing firmware pages. Unlike the keyer protocol, it uses plain bytes.
 

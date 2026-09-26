@@ -3,6 +3,7 @@ name = "mhfwupdater"
 version = "0.1.0"
 edition = "2024"
 description = "Firmware updater for microHAM USB devices"
+license = "GPL-2.0-only"
 
 [dependencies]
 anyhow = "1"

@@ -1,3 +1,7 @@
+// mhfwupdater - firmware updater for microHAM USB devices
+// Copyright (C) 2026  Matthias Moeller, DJ5QV
+// SPDX-License-Identifier: GPL-2.0-only
+
 //! Byte transport to the device.
 
 use std::collections::VecDeque;

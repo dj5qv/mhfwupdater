@@ -175,3 +175,15 @@ the protection.
 | `src/keyer.rs`      | Firmware protocol: version query, restart into the bootloader |
 | `src/bootloader.rs` | Bootloader protocol: handshake, page writing |
 | `src/sim.rs`        | Simulated device for the tests |
+
+## License
+
+Copyright (C) 2026 Matthias Moeller, DJ5QV
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License version 2 as published by the Free
+Software Foundation. See the file `COPYING`.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.

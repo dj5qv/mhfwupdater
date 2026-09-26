@@ -1,3 +1,7 @@
+// mhfwupdater - firmware updater for microHAM USB devices
+// Copyright (C) 2026  Matthias Moeller, DJ5QV
+// SPDX-License-Identifier: GPL-2.0-only
+
 //! Parser for microHAM firmware files (`*.cbl`, file format version 2.1).
 //!
 //! A file is a sequence of blocks: type byte, length byte, content. Flash data

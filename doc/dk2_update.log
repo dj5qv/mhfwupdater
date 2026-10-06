@@ -1,0 +1,14 @@
+mattes@maxec-home ~/Devel/hamradio/mhfwupdater/target/debug (master) $ ./mhfwupdater flash ../../firmware/dk2_release_03_1
+dk2_release_03_11.cbl  dk2_release_03_12.cbl  dk2_release_03_14.cbl  
+mattes@maxec-home ~/Devel/hamradio/mhfwupdater/target/debug (master) $ ./mhfwupdater flash ../../firmware/dk2_release_03_14.cbl 
+Device:     /dev/ttyUSB0
+Firmware:   DIGI KEYER II 3.2
+New:        DIGI KEYER II 3.14, 498 pages
+Protection: invalidate page
+Write firmware? Don't interrupt or power off the device while writing. [y/N] y
+Bootloader: 2.1, product type 0x16/0x01, hardware 0, mechanical 0
+warn: device rejected the invalidate page, continuing without it
+Writing:    page 498/498 (100%)
+Note:       the device rejected the invalidate page.
+Firmware:   DIGI KEYER II 3.14
+

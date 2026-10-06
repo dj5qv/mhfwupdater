@@ -8,9 +8,6 @@ use anyhow::{Result, bail};
 
 use crate::cbl::Firmware;
 
-/// Checksum of the "invalidate" pages, as given in the bootloader documentation.
-const INVALIDATE_CHECKSUM: [u8; 2] = [0x01, 0xcd];
-
 pub struct Family {
     pub product_type: u8,
     pub name: &'static str,
@@ -93,7 +90,10 @@ impl Family {
         let code = self.invalidate_code?;
         let mut page = vec![0; self.page_len];
         page[4..4 + code.len()].copy_from_slice(code);
-        page[self.page_len - 2..].copy_from_slice(&INVALIDATE_CHECKSUM);
+        // The documentation gives 01 CD for all families. That is the byte sum
+        // of the MK page. The DK2 rejects 01 CD but accepts the byte sum.
+        let sum = code.iter().map(|&b| u16::from(b)).sum::<u16>();
+        page[self.page_len - 2..].copy_from_slice(&sum.to_be_bytes());
         Some(page)
     }
 }
@@ -157,7 +157,7 @@ mod tests {
     use crate::cbl::VersionSpec;
 
     #[test]
-    fn invalidate_pages_match_documentation() {
+    fn invalidate_pages() {
         let mk = family(0x10).unwrap().invalidate_page().unwrap();
         assert_eq!(mk.len(), 70);
         assert_eq!(mk[..8], [0, 0, 0, 0, 0xff, 0xce, 0, 0]);
@@ -167,7 +167,7 @@ mod tests {
         let dk2 = family(0x16).unwrap().invalidate_page().unwrap();
         assert_eq!(dk2.len(), 134);
         assert_eq!(dk2[..8], [0, 0, 0, 0, 0x0c, 0x94, 0x00, 0xfe]);
-        assert_eq!(dk2[132..], [0x01, 0xcd]);
+        assert_eq!(dk2[132..], [0x01, 0x9e]);
 
         assert!(family(0x17).unwrap().invalidate_page().is_none());
     }

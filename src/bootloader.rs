@@ -8,7 +8,7 @@
 use std::time::{Duration, Instant};
 
 use anyhow::{Result, anyhow, bail};
-use log::{debug, warn};
+use log::debug;
 
 use crate::cbl::Firmware;
 use crate::devices::HwInfo;
@@ -178,7 +178,7 @@ pub fn flash(
                 order.rotate_left(1);
             }
             // Nothing was written, the device's firmware is still intact.
-            PageStatus::ChecksumError => warn!("device rejected the invalidate page, continuing without it"),
+            PageStatus::ChecksumError => {}
             PageStatus::WriteFailed => bail!("writing the invalidate page failed"),
         }
     }

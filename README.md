@@ -146,14 +146,15 @@ bootloader.
 To keep an interrupted update from starting half-written firmware, the tool
 first writes a placeholder start page that jumps straight back into the
 bootloader, and writes the real start page last. A device interrupted this
-way stays in its bootloader, and `--recover` should find it without a power
-cycle.
+way stays in its bootloader instead of starting half-written firmware. The
+micro KEYER III then shows "Uploading Firmware", but its bootloader only works
+properly again after a power cycle: switch it off completely (USB and power
+supply), start `--recover` and switch it on.
 
-This protection follows microHAM's documentation and hasn't been tested on
-hardware yet. It is off for the micro KEYER III, because the documented
-placeholder page doesn't fit that device's memory layout. If a device rejects
-the placeholder page, nothing is written and the update continues without
-the protection.
+This protection follows microHAM's documentation and their Windows router.
+It has been tested on a DIGI KEYER II and a micro KEYER III. If a device
+rejects the placeholder page, nothing is written and the update continues
+without the protection.
 
 ## Troubleshooting
 

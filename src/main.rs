@@ -260,7 +260,14 @@ fn flash(
     } else {
         Entry::Command
     };
-    let hw = bootloader::enter(&mut link, entry)?;
+    let hw = bootloader::enter(&mut link, entry);
+    // After an interrupted update, the micro KEYER III's bootloader answers
+    // START but hangs on GET VERSION until the device is power-cycled.
+    let hw = if recover {
+        hw.context("bootloader not ready: switch the device off completely, run this again and switch it on")?
+    } else {
+        hw?
+    };
     print_bootloader(&hw);
     // Nothing is written yet. On errors, the bootloader times out and restarts
     // the old firmware.

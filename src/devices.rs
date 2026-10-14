@@ -13,7 +13,7 @@ pub struct Family {
     pub name: &'static str,
     pub page_len: usize,
     /// Jump back into the bootloader, placed at the start of the page data of
-    /// the "invalidate" page. `None` where the documented one is doubtful.
+    /// the "invalidate" page. `None` disables the page for that family.
     pub invalidate_code: Option<&'static [u8]>,
 }
 
@@ -62,13 +62,13 @@ pub static FAMILIES: &[Family] = &[
         page_len: 134,
         invalidate_code: Some(JMP_0X1FC00),
     },
-    // The documentation groups the MK3 with the MK2 (jump to 0x1FC00), but MK3
-    // images are ~190 KiB, too large for a bootloader at 0x1FC00.
+    // MK3 images are ~190 KiB, beyond 0x1FC00, yet the documentation and
+    // microHAM's router both use this jump for the MK3 as well.
     Family {
         product_type: 0x17,
         name: "micro KEYER III",
         page_len: 134,
-        invalidate_code: None,
+        invalidate_code: Some(JMP_0X1FC00),
     },
 ];
 
@@ -169,7 +169,8 @@ mod tests {
         assert_eq!(dk2[..8], [0, 0, 0, 0, 0x0c, 0x94, 0x00, 0xfe]);
         assert_eq!(dk2[132..], [0x01, 0x9e]);
 
-        assert!(family(0x17).unwrap().invalidate_page().is_none());
+        let mk3 = family(0x17).unwrap().invalidate_page().unwrap();
+        assert_eq!(mk3, dk2);
     }
 
     #[test]

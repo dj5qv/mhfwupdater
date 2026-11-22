@@ -4,7 +4,8 @@ Firmware updater for microHAM USB devices on Linux. It writes the firmware
 files (`*.cbl`) distributed by microHAM, which microHAM Router does on Windows.
 
 Status: tested on a micro KEYER III (downgrade 2.12 → 2.11 and upgrade back
-to 2.12). The other devices are untested.
+to 2.12) and a DIGI KEYER II (upgrade 3.02 → 3.14). The other devices are
+untested.
 
 ## Supported devices
 
@@ -128,7 +129,7 @@ $ mhfwupdater flash mk3_release_02_12.cbl
 Device:     /dev/ttyUSB0
 Firmware:   micro KEYER III 2.11
 New:        micro KEYER III 2.12, 1544 pages
-Protection: none known for this device
+Protection: invalidate page
 Write firmware? Don't interrupt or power off the device while writing. [y/N] y
 Bootloader: 3.2, product type 0x17/0x01, hardware 0, mechanical 0
 Writing:    page 1544/1544 (100%)

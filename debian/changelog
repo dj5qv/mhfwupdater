@@ -1,0 +1,8 @@
+mhfwupdater (1.0.0) unstable; urgency=medium
+
+  * First release. Writes microHAM firmware files (*.cbl) to micro KEYER,
+    CW KEYER, DIGI KEYER, micro KEYER II, micro KEYER III, DIGI KEYER II,
+    micro KEYER 2R/2R+, micro 2R, Station Master and Station Master DeLuxe.
+  * Tested on micro KEYER III and DIGI KEYER II.
+
+ -- Matthias Moeller <dj5qv@maxec.de>  Sun, 22 Nov 2026 12:00:00 +0100

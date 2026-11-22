@@ -46,6 +46,18 @@ cargo install --path .
 `cargo test` runs the tests against a simulated device. If there are firmware
 files in `firmware/`, the tests also check that they parse.
 
+### Debian package
+
+```sh
+dpkg-buildpackage -us -uc -b -tc
+```
+
+The `.deb` files land in the parent directory. The build uses the `cargo` in
+`PATH`, either Debian's (1.85 or newer, Debian 13 and later) or rustup's, and
+builds in `debian/cargo-target/`, which it removes afterwards. Crates not yet
+in `~/.cargo` are downloaded from crates.io. The version in `Cargo.toml` must
+match the one in `debian/changelog`.
+
 ## Before updating
 
 mhuxd opens the device ports exclusively, so stop it first. This takes all

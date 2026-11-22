@@ -1,0 +1,7 @@
+# Keep build output, local tool settings and the microHAM firmware files
+# (not ours to distribute) out of the source tarball. The bare tar-ignore
+# keeps dpkg's default excludes (.git etc.).
+tar-ignore
+tar-ignore = "target"
+tar-ignore = "firmware"
+tar-ignore = ".claude"

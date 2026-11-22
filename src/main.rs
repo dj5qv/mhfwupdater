@@ -30,7 +30,11 @@ use crate::link::{Link, SerialLink};
 const RECOVER_WINDOW: Duration = Duration::from_secs(60);
 
 #[derive(Parser)]
-#[command(version, about = "Firmware updater for microHAM USB devices")]
+#[command(
+    version,
+    about = "Firmware updater for microHAM USB devices",
+    help_template = "{name} {version}\n{about-with-newline}\n{usage-heading} {usage}\n\n{all-args}{after-help}"
+)]
 struct Cli {
     /// More output (-v: debug, -vv: also byte traffic)
     #[arg(short, long, action = ArgAction::Count, global = true)]

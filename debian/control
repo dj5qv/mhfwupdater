@@ -1,0 +1,25 @@
+Source: mhfwupdater
+Section: hamradio
+Priority: optional
+Maintainer: Matthias Moeller <dj5qv@maxec.de>
+Build-Depends: debhelper-compat (= 13),
+               cargo (>= 1.85) | rustup
+Standards-Version: 4.7.2
+Rules-Requires-Root: no
+Homepage: https://github.com/dj5qv/mhfwupdater
+Vcs-Git: https://github.com/dj5qv/mhfwupdater.git
+Vcs-Browser: https://github.com/dj5qv/mhfwupdater
+
+Package: mhfwupdater
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: mhuxd
+Description: firmware updater for microHAM USB devices
+ mhfwupdater writes the firmware files (*.cbl) distributed by microHAM to
+ their USB devices, which microHAM Router does on Windows. Supported are
+ micro KEYER, CW KEYER, DIGI KEYER, micro KEYER II, micro KEYER III,
+ DIGI KEYER II, micro KEYER 2R/2R+, micro 2R, Station Master and
+ Station Master DeLuxe.
+ .
+ Before writing, the firmware file is checked against the device's product
+ type and hardware revision. Interrupted updates can be finished later.

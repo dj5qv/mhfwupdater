@@ -49,14 +49,25 @@ files in `firmware/`, the tests also check that they parse.
 ### Debian package
 
 ```sh
-dpkg-buildpackage -us -uc -b -tc
+./make_deb.sh
 ```
 
 The `.deb` files land in the parent directory. The build uses the `cargo` in
 `PATH`, either Debian's (1.85 or newer, Debian 13 and later) or rustup's, and
 builds in `debian/cargo-target/`, which it removes afterwards. Crates not yet
-in `~/.cargo` are downloaded from crates.io. The version in `Cargo.toml` must
-match the one in `debian/changelog`.
+in `~/.cargo` are downloaded from crates.io.
+
+The packages get a snapshot version such as `1.0.0+20261122.120000.g82433d3`,
+unless HEAD is tagged `v<version>` and has no uncommitted changes: then they
+get the plain release version. Plain `dpkg-buildpackage -us -uc -b -tc` always
+uses the version from `debian/changelog`. The version in `Cargo.toml` must
+match the one in `debian/changelog`, where a pre-release `1.1.0-beta.1` is
+written `1.1.0~beta.1`.
+
+On GitHub, every push builds packages for Debian 12 and 13 and Ubuntu 22.04,
+24.04 and 26.04, on amd64 and arm64. Pushing a tag `v<version>` also creates
+a draft release with the packages, with the `debian/changelog` entry as
+release notes.
 
 ## Before updating
 
@@ -188,6 +199,7 @@ without the protection.
 | `src/keyer.rs`      | Firmware protocol: version query, restart into the bootloader |
 | `src/bootloader.rs` | Bootloader protocol: handshake, page writing |
 | `src/sim.rs`        | Simulated device for the tests |
+| `man/mhfwupdater.1` | Manual page |
 
 ## License
 

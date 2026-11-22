@@ -12,6 +12,7 @@ export CARGO_TARGET_DIR = $(CURDIR)/debian/cargo-target
 # Debug info for the -dbgsym package, dh_strip removes it from the binary.
 export CARGO_PROFILE_RELEASE_DEBUG = true
 
+# A Cargo pre-release 1.1.0-beta.1 is 1.1.0~beta.1 in debian/changelog.
 CARGO_VERSION := $(shell sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
 PARALLEL := $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 CARGO_FLAGS = --release --locked $(if $(PARALLEL),--jobs $(PARALLEL))
@@ -20,7 +21,7 @@ CARGO_FLAGS = --release --locked $(if $(PARALLEL),--jobs $(PARALLEL))
 	dh $@
 
 override_dh_auto_configure:
-	@if [ "$(CARGO_VERSION)" != "$(DEB_VERSION_UPSTREAM)" ]; then \
+	@if [ "$(subst -,~,$(CARGO_VERSION))" != "$(DEB_VERSION_UPSTREAM)" ]; then \
 		echo "Cargo.toml has version $(CARGO_VERSION)," \
 			"debian/changelog $(DEB_VERSION_UPSTREAM)" >&2; \
 		exit 1; \
@@ -37,6 +38,12 @@ endif
 override_dh_auto_install:
 	install -D -m 0755 $(CARGO_TARGET_DIR)/release/mhfwupdater \
 		debian/mhfwupdater/usr/bin/mhfwupdater
+
+# make_deb.sh passes a snapshot version in MHFWUPDATER_DEB_VERSION, which
+# replaces the debian/changelog version in the generated .deb files.
+# Plain dpkg-buildpackage runs are unaffected.
+override_dh_gencontrol:
+	dh_gencontrol $(if $(MHFWUPDATER_DEB_VERSION),-- -v$(MHFWUPDATER_DEB_VERSION))
 
 override_dh_auto_clean:
 	rm -rf $(CARGO_TARGET_DIR)

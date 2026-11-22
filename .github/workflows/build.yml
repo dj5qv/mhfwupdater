@@ -1,0 +1,123 @@
+name: build
+
+# Every push and pull request: build, run the tests, build Debian packages
+# for each distribution and architecture below.
+# Pushing a tag v<version> (e.g. v1.0.0) additionally creates a draft GitHub
+# release with the packages and the debian/changelog entry for that version
+# as release notes. Review and publish the draft on GitHub.
+# make_deb.sh builds the plain release version only when the tag matches the
+# version in Cargo.toml and debian/changelog, snapshot versions otherwise.
+
+on:
+  push:
+    branches: [ "master" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - name: Build
+      run: cargo build --locked
+    - name: Test
+      run: cargo test --locked
+
+  deb:
+    strategy:
+      fail-fast: false
+      matrix:
+        dist:
+          - { image: "debian:trixie",  tag: "debian13" }
+          - { image: "debian:bookworm", tag: "debian12" }
+          - { image: "ubuntu:resolute", tag: "ubuntu26.04" }
+          - { image: "ubuntu:noble",   tag: "ubuntu24.04" }
+          - { image: "ubuntu:jammy",   tag: "ubuntu22.04" }
+        arch:
+          - { name: "amd64", runner: "ubuntu-24.04" }
+          - { name: "arm64", runner: "ubuntu-24.04-arm" }
+    runs-on: ${{ matrix.arch.runner }}
+    container: ${{ matrix.dist.image }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+    # git first, so checkout gets a real repository (make_deb.sh reads the
+    # commit, tag and dirty state from it).
+    - name: Install git
+      run: |
+        apt-get update
+        apt-get install -y --no-install-recommends git ca-certificates
+    - uses: actions/checkout@v7
+    - name: Install build deps
+      run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+        apt-get install -y --no-install-recommends build-essential dpkg-dev debhelper curl
+    # Debian 12 and Ubuntu 22.04/24.04 ship Rust older than 1.85 (edition
+    # 2024), so all distributions get the same stable toolchain from rustup.
+    - name: Install Rust
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+          sh -s -- -y --profile minimal
+        echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+    # -d: this rustup is not a dpkg package, so the build dependency
+    # "cargo | rustup" can't be checked. The other build deps are installed
+    # above.
+    - name: Build Debian package
+      run: |
+        ./make_deb.sh -d
+        mkdir -p output
+        # Same file name on every distribution otherwise.
+        for f in ../mhfwupdater_*.deb; do
+          b=$(basename "$f" .deb)
+          mv "$f" "output/${b%_*}_${{ matrix.dist.tag }}_${b##*_}.deb"
+        done
+        ls -l output
+    - name: Upload package
+      uses: actions/upload-artifact@v7
+      with:
+        name: mhfwupdater-deb-${{ matrix.dist.tag }}-${{ matrix.arch.name }}
+        path: output/*.deb
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ check, deb ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/download-artifact@v8
+      with:
+        path: assets
+        merge-multiple: true
+    - name: Create draft release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ github.ref_name }}
+      run: |
+        version=${TAG#v}
+        # Otherwise make_deb.sh has built snapshot packages.
+        cargo_version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+        if [ "$cargo_version" != "$version" ]; then
+          echo "Tag $TAG, but Cargo.toml has version $cargo_version" >&2
+          exit 1
+        fi
+        # The debian/changelog entry, without its header and trailer line.
+        # A Cargo pre-release 1.1.0-beta.1 is 1.1.0~beta.1 there.
+        debversion=$(echo "$version" | tr - '~')
+        awk -v h="mhfwupdater ($debversion)" '
+          index($0, h) == 1 { found = 1; next }
+          found && /^ -- / { exit }
+          found { sub(/^  /, ""); print }
+        ' debian/changelog > notes.md
+        if ! grep -q . notes.md; then
+          echo "No entry for $debversion in debian/changelog" >&2
+          exit 1
+        fi
+        prerelease=
+        case "$version" in *-*) prerelease=--prerelease ;; esac
+        ls -l assets
+        gh release create "$TAG" --verify-tag --draft $prerelease \
+          --title "mhfwupdater $version" --notes-file notes.md assets/*

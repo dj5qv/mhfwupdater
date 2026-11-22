@@ -1,0 +1,240 @@
+.\" mhfwupdater - firmware updater for microHAM USB devices
+.\" Copyright (C) 2026  Matthias Moeller, DJ5QV
+.\" SPDX-License-Identifier: GPL-2.0-only
+.TH MHFWUPDATER 1 "November 2026" "mhfwupdater" "User Commands"
+.nh
+.SH NAME
+mhfwupdater \- firmware updater for microHAM USB devices
+.SH SYNOPSIS
+.B mhfwupdater
+.RB [ \-v | \-vv ]
+.B list
+.br
+.B mhfwupdater
+.RB [ \-v | \-vv ]
+.B info
+.IR file .\|.\|.
+.br
+.B mhfwupdater
+.RB [ \-v | \-vv ]
+.B probe
+.RB [ \-d
+.IR device ]
+.RB [ \-\-bootloader ]
+.br
+.B mhfwupdater
+.RB [ \-v | \-vv ]
+.B flash
+.RB [ \-d
+.IR device ]
+.RB [ \-\-dry\-run ]
+.RB [ \-\-no\-invalidate ]
+.RB [ \-\-recover ]
+.RB [ \-y ]
+.I file
+.SH DESCRIPTION
+.B mhfwupdater
+writes the firmware files
+.RI ( *.cbl )
+distributed by microHAM to microHAM USB devices, which microHAM Router does
+on Windows.
+.PP
+Before anything is written, the firmware file is checked against the device:
+the product type must match and the device's hardware revision must meet the
+firmware's requirements.
+Downgrades and rewriting the installed version are allowed.
+.PP
+Devices are found through sysfs by their USB ID 0403:eeef.
+The stock
+.B ftdi_sio
+kernel driver makes them available as
+.IR /dev/ttyUSB n,
+which needs read and write access, usually through membership in the
+.B dialout
+group.
+.PP
+.BR mhuxd (8)
+opens the device ports exclusively, so stop it before an update
+.RB ( "systemctl stop mhuxd" )
+and start it again afterwards.
+This takes all devices it serves offline in the meantime.
+The device restarts during the update.
+Don't transmit while updating.
+.SH COMMANDS
+.TP
+.B list
+List the attached microHAM devices: tty, serial number and product name.
+.TP
+.BI info " file" .\|.\|.
+Show the contents of firmware files: device, version, hardware requirements
+and size.
+.TP
+.B probe
+Show the firmware version of a device.
+With
+.BR \-\-bootloader ,
+the device also restarts into its bootloader to report the bootloader version,
+then returns to its firmware.
+Nothing is written.
+.TP
+.BI flash " file"
+Write a firmware file to a device.
+Shows the installed and the new firmware and asks for confirmation before
+writing.
+.TP
+.B help
+Print the help, or the help of the given command.
+.SH OPTIONS
+.TP
+.BR \-v ", " \-\-verbose
+Print debug messages.
+Given twice
+.RB ( \-vv ),
+also print all bytes sent and received.
+.TP
+.BR \-h ", " \-\-help
+Print the help.
+After a command, print the help of that command.
+.TP
+.BR \-V ", " \-\-version
+Print the version.
+.SS probe and flash
+.TP
+.BR \-d ", " \-\-device " \fIdevice\fR"
+The device to use, by serial number (as shown by
+.BR list )
+or path
+.RI ( /dev/ttyUSB1 ).
+Needed only when several devices are attached.
+The serial number is the better choice, because ttyUSB numbers can change
+when devices are replugged.
+.SS probe
+.TP
+.B \-\-bootloader
+Also restart into the bootloader and read its version.
+.SS flash
+.TP
+.B \-\-dry\-run
+Check the file against the device and enter the bootloader, but write
+nothing.
+The bootloader times out and restarts the installed firmware.
+.TP
+.B \-\-no\-invalidate
+Don't write the placeholder start page that protects against interrupted
+updates (see
+.BR "INTERRUPTED UPDATES" ).
+.TP
+.B \-\-recover
+Don't ask the firmware to restart, wait up to 60 seconds for the bootloader
+instead.
+Use this to finish an interrupted update, and power-cycle the device when
+asked.
+.TP
+.BR \-y ", " \-\-yes
+Don't ask for confirmation.
+Needed when standard input is not a terminal.
+.SH SUPPORTED DEVICES
+.TP 12
+.B mmk_*.cbl
+micro KEYER, CW KEYER, DIGI KEYER
+.TP
+.B mpk_*.cbl
+micro KEYER II
+.TP
+.B mk3_*.cbl
+micro KEYER III
+.TP
+.B dk2_*.cbl
+DIGI KEYER II
+.TP
+.B mok_*.cbl
+micro KEYER 2R, 2R+
+.TP
+.B u2r_*.cbl
+micro 2R
+.TP
+.B sml_*.cbl
+Station Master
+.TP
+.B smd_*.cbl
+Station Master DeLuxe
+.PP
+Tested on the micro KEYER III and the DIGI KEYER II.
+.SH INTERRUPTED UPDATES
+If an update is interrupted (power loss, USB unplugged, program killed), the
+device is left with incomplete firmware and no longer answers
+.BR probe .
+The bootloader still starts at every power-up, so the update can be finished
+with
+.B flash \-\-recover
+and the same file.
+Power-cycle the device when asked.
+.PP
+To keep an interrupted update from starting half-written firmware,
+.B flash
+first writes a placeholder start page that jumps straight back into the
+bootloader, and writes the real start page last.
+A device interrupted this way stays in its bootloader.
+The micro KEYER III then shows "Uploading Firmware", but its bootloader only
+works properly again after a power cycle: switch it off completely (USB and
+power supply), start
+.B flash \-\-recover
+and switch it on.
+.PP
+If a device rejects the placeholder page, nothing is written and the update
+continues without the protection.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+An error, reported on standard error.
+.TP
+.B 2
+Invalid command line, or no command given.
+.SH DIAGNOSTICS
+.TP
+.B cannot open /dev/ttyUSB0 (is mhuxd running?)
+.BR mhuxd (8)
+or another program has the port open, or the user lacks access to it.
+.TP
+.B no answer from the device firmware
+The device is switched off, or its firmware is incomplete: use
+.BR \-\-recover .
+.TP
+.B bootloader did not answer
+Try again.
+If it keeps failing, run with
+.B \-vv
+to see the traffic.
+.SH EXAMPLES
+List the devices, check a firmware file and update the device:
+.PP
+.RS
+.nf
+$ mhfwupdater list
+/dev/ttyUSB0  M32VFFGJ  micro KEYER III
+$ mhfwupdater info mk3_release_02_12.cbl
+$ mhfwupdater flash mk3_release_02_12.cbl
+.fi
+.RE
+.PP
+Finish an interrupted update of a particular device:
+.PP
+.RS
+.nf
+$ mhfwupdater flash \-\-recover \-d M32VFFGJ mk3_release_02_12.cbl
+.fi
+.RE
+.SH SEE ALSO
+.BR mhuxd (8)
+.PP
+.I /usr/share/doc/mhfwupdater/README.md.gz
+.SH AUTHOR
+Matthias Moeller, DJ5QV.
+.SH COPYRIGHT
+Copyright \(co 2026 Matthias Moeller, DJ5QV.
+License GPL version 2.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
